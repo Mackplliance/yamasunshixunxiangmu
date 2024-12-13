@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录/注册 - 购物商城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            margin-bottom: -2px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            color: #28a745;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>购物商城</h1>
+    </header>
+
+    <div class="container">
+        <div class="auth-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('login')">登录</div>
+                <div class="tab" onclick="switchTab('register')">注册</div>
+            </div>
+
+            <!-- 登录表单 -->
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginUsername">用户名</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">密码</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">登录</button>
+                <p id="loginMessage"></p>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="registerForm" style="display: none;" onsubmit="return handleRegister(event)">
+                <div class="form-group">
+                    <label for="registerUsername">用户名</label>
+                    <input type="text" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">密码</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <button type="submit">注册</button>
+                <p id="registerMessage"></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 切换登录/注册表单
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const tabs = document.querySelectorAll('.tab');
+            
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+            }
+        }
+
+        // 处理登录
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const message = document.getElementById('loginMessage');
+            
+            // 从 localStorage 获取用户数据
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                message.textContent = '登录成功！';
+                message.className = 'success-message';
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                
+                // 根据用户类型跳转到不同页面
+                if (user.isAdmin) {
+                    setTimeout(() => window.location.href = 'admin.html', 1000);
+                } else {
+                    setTimeout(() => window.location.href = 'index.html', 1000);
+                }
+            } else {
+                message.textContent = '用户名或密码错误！';
+                message.className = 'error-message';
+            }
+            return false;
+        }
+
+        // 处理注册
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const message = document.getElementById('registerMessage');
+            
+            if (password !== confirmPassword) {
+                message.textContent = '两次输入的密码不一致！';
+                message.className = 'error-message';
+                return false;
+            }
+            
+            // 从 localStorage 获取用户数据
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            // 检查用户名是否已存在
+            if (users.some(u => u.username === username)) {
+                message.textContent = '用户名已存在！';
+                message.className = 'error-message';
+                return false;
+            }
+            
+            // 创建新用户
+            const newUser = {
+                username: username,
+                password: password,
+                isAdmin: false, // 默认为普通用户
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            message.textContent = '注册成功！请登录。';
+            message.className = 'success-message';
+            
+            // 清空表单并切换到登录页
+            document.getElementById('registerForm').reset();
+            setTimeout(() => switchTab('login'), 1000);
+            
+            return false;
+        }
+
+        // 初始化管理员账号
+        function initAdminAccount() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            if (!users.some(u => u.isAdmin)) {
+                users.push({
+                    username: 'admin',
+                    password: 'admin123',
+                    isAdmin: true,
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        // 页面加载时初始化管理员账号
+        initAdminAccount();
+    </script>
+</body>
+</html> 

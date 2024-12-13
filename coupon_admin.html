@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优惠券管理</title>
+    <style>
+        /* 重置默认样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页面顶部导航栏样式 */
+        header {
+            background: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 主容器样式 */
+        .container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 优惠券表单样式 */
+        .coupon-form {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .coupon-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .coupon-table th,
+        .coupon-table td {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .nav-links a {
+            color: white;
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>优惠券管理</h1>
+        <div class="nav-links">
+            <a href="admin.html">商品管理</a>
+            <a href="index.html">返回商城</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="coupon-form">
+            <h2>添加优惠券</h2>
+            <form id="couponForm">
+                <input type="hidden" id="couponId">
+                <div class="form-group">
+                    <label for="code">优惠码</label>
+                    <input type="text" id="code" required>
+                </div>
+                <div class="form-group">
+                    <label for="discount">折扣金额</label>
+                    <input type="number" id="discount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="minAmount">最低使用金额</label>
+                    <input type="number" id="minAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="validUntil">有效期至</label>
+                    <input type="date" id="validUntil" required>
+                </div>
+                <button type="submit">保存优惠券</button>
+            </form>
+        </div>
+
+        <table class="coupon-table">
+            <thead>
+                <tr>
+                    <th>优惠码</th>
+                    <th>折扣金额</th>
+                    <th>最低使用金额</th>
+                    <th>有效期至</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="couponList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // 从localStorage获取优惠券数据，如果没有则初始化为空数组
+        let coupons = JSON.parse(localStorage.getItem('coupons')) || [];
+        
+        // 获取DOM元素
+        const couponForm = document.getElementById('couponForm');
+        const couponList = document.getElementById('couponList');
+
+        // 渲染优惠券列表函数
+        function renderCoupons() {
+            couponList.innerHTML = '';
+            // 遍历优惠券数组，为每个优惠券创建表格行
+            coupons.forEach((coupon, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${coupon.code}</td>
+                    <td>¥${coupon.discount}</td>
+                    <td>¥${coupon.minAmount}</td>
+                    <td>${coupon.validUntil}</td>
+                    <td>
+                        <button onclick="editCoupon(${index})">编辑</button>
+                        <button onclick="deleteCoupon(${index})">删除</button>
+                    </td>
+                `;
+                couponList.appendChild(row);
+            });
+            // 保存更新后的数据到localStorage
+            localStorage.setItem('coupons', JSON.stringify(coupons));
+        }
+
+        // 表单提交处理函数
+        couponForm.onsubmit = function(e) {
+            e.preventDefault();
+            // 获取表单数据
+            const couponId = document.getElementById('couponId').value;
+            const coupon = {
+                code: document.getElementById('code').value,
+                discount: parseFloat(document.getElementById('discount').value),
+                minAmount: parseFloat(document.getElementById('minAmount').value),
+                validUntil: document.getElementById('validUntil').value
+            };
+
+            // 判断是新增还是编辑操作
+            if (couponId === '') {
+                coupons.push(coupon); // 新增优惠券
+            } else {
+                coupons[parseInt(couponId)] = coupon; // 更新现有优惠券
+            }
+
+            // 保存数据并刷新显示
+            localStorage.setItem('coupons', JSON.stringify(coupons));
+            renderCoupons();
+            couponForm.reset();
+            document.getElementById('couponId').value = '';
+        };
+
+        // 编辑优惠券函数
+        function editCoupon(index) {
+            // 将选中的优惠券数据填充到表单中
+            const coupon = coupons[index];
+            document.getElementById('couponId').value = index;
+            document.getElementById('code').value = coupon.code;
+            document.getElementById('discount').value = coupon.discount;
+            document.getElementById('minAmount').value = coupon.minAmount;
+            document.getElementById('validUntil').value = coupon.validUntil;
+        }
+
+        // 删除优惠券函数
+        function deleteCoupon(index) {
+            if (confirm('确定要删除这个优惠券吗？')) {
+                coupons.splice(index, 1); // 从数组中删除指定优惠券
+                localStorage.setItem('coupons', JSON.stringify(coupons));
+                renderCoupons();
+            }
+        }
+
+        // 页面加载时渲染优惠券列表
+        renderCoupons();
+    </script>
+</body>
+</html> 

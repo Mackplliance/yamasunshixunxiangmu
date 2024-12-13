@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商城后台管理</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页头样式 */
+        header {
+            background: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 导航链接样式 */
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 5px 10px;
+            border: 1px solid white;
+            border-radius: 4px;
+        }
+
+        /* 主容器样式 */
+        .container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 商品表单样式 */
+        .product-form {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* 表单组样式 */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        /* 表单标签样式 */
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 表单输入框样式 */
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* 按钮通用样式 */
+        button {
+            padding: 0.5rem 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* 按钮悬停效果 */
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* 商品表格样式 */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        /* 表格单元格样式 */
+        .product-table th,
+        .product-table td {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        /* 操作按钮样式 */
+        .action-btn {
+            margin-right: 0.5rem;
+        }
+
+        /* 编辑按钮样式 */
+        .edit-btn {
+            background: #28a745;
+        }
+
+        /* 删除按钮样式 */
+        .delete-btn {
+            background: #dc3545;
+        }
+
+        /* 图片预览样式 */
+        .preview-img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面头部 -->
+    <header>
+        <h1>商城后台管理</h1>
+        <div class="nav-links">
+            <a href="coupon_admin.html">优惠券管理</a>
+            <a href="index.html">返回商城</a>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <div class="container">
+        <!-- 商品添加/编辑表单 -->
+        <div class="product-form">
+            <h2>添加/编辑商品</h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <!-- 商品信息输入字段 -->
+                <div class="form-group">
+                    <label for="name">商品名称</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="price">价格</label>
+                    <input type="number" id="price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="stock">库存</label>
+                    <input type="number" id="stock" required>
+                </div>
+                <div class="form-group">
+                    <label for="image">图片URL</label>
+                    <input type="text" id="image" required onchange="previewImage(this.value)">
+                    <img id="imagePreview" class="preview-img" src="" alt="" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label for="description">商品描述</label>
+                    <textarea id="description" rows="3"></textarea>
+                </div>
+                <button type="submit">保存商品</button>
+            </form>
+        </div>
+
+        <!-- 商品列表表格 -->
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>商品名称</th>
+                    <th>价格</th>
+                    <th>库存</th>
+                    <th>图片</th>
+                    <th>描述</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="productList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // 从本地存储获取商品数据，如果没有则初始化为空数组
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        const productForm = document.getElementById('productForm');
+        const productList = document.getElementById('productList');
+
+        // 预览图片函数
+        function previewImage(url) {
+            const preview = document.getElementById('imagePreview');
+            preview.src = url;
+            preview.style.display = url ? 'block' : 'none';
+        }
+
+        // 渲染商品列表函数
+        function renderProducts() {
+            productList.innerHTML = '';
+            products.forEach((product, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>¥${product.price}</td>
+                    <td>${product.stock}</td>
+                    <td><img src="${product.image}" alt="${product.name}" style="width: 50px;"></td>
+                    <td>${product.description || ''}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editProduct(${index})">编辑</button>
+                        <button class="action-btn delete-btn" onclick="deleteProduct(${index})">删除</button>
+                    </td>
+                `;
+                productList.appendChild(row);
+            });
+            // 更新本地存储
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        // 处理表单提交
+        productForm.onsubmit = function(e) {
+            e.preventDefault();
+            const productId = document.getElementById('productId').value;
+            // 收集表单数据
+            const product = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                stock: parseInt(document.getElementById('stock').value),
+                image: document.getElementById('image').value,
+                description: document.getElementById('description').value
+            };
+
+            // 根据是否有productId判断是新增还是编辑
+            if (productId === '') {
+                // 添加新商品
+                products.push(product);
+            } else {
+                // 更新已有商品
+                products[parseInt(productId)] = product;
+            }
+
+            // 保存数据并重置表单
+            localStorage.setItem('products', JSON.stringify(products));
+            renderProducts();
+            productForm.reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+        };
+
+        // 编辑商品
+        function editProduct(index) {
+            const product = products[index];
+            // 填充表单数据
+            document.getElementById('productId').value = index;
+            document.getElementById('name').value = product.name;
+            document.getElementById('price').value = product.price;
+            document.getElementById('stock').value = product.stock;
+            document.getElementById('image').value = product.image;
+            document.getElementById('description').value = product.description || '';
+            previewImage(product.image);
+        }
+
+        // 删除商品
+        function deleteProduct(index) {
+            if (confirm('确定要删除这个商品吗？')) {
+                products.splice(index, 1);
+                localStorage.setItem('products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        // 页面加载时渲染商品列表
+        renderProducts();
+    </script>
+</body>
+</html>
